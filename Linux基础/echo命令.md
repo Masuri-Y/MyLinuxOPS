@@ -1,0 +1,80 @@
+### echo命令
+
+回显，将命令后跟随的字符串打印到终端
+
+```bash
+[root@mylinuxops ~]# echo hello world
+hello world
+```
+
+echo选项：
+
+* -E 
+* -n 不自动换行
+* -e 启用\字符的解释功能
+
+
+
+> ##### -e参数使用
+
+-e参数可以将字符串中的\字符进行转义，如\n进行换行
+
+```bash
+masuri@XPS-13-9380:~$ echo -e "hello\nworld"
+hello
+world
+masuri@XPS-13-9380:~$ echo "hello\nworld"
+hello\nworld
+```
+
+启用命令选项-e，若字符串中出现以下字符，则特别加以处理，而不会将它当作一般文字输出
+
+* `\a` 	发出警告
+* `\b` 	退格
+* `\c`	最后不加上换行符号
+* `\e escape`	相当于\033
+* `\n`	换行且光标移至行首
+* `\r`	回车，即光标移至行首，但不换行
+* `\t`	插入tab
+* `\\`	插入\字符
+* `\0nnn`	插入nnn(八进制)所代表的ASCII字符
+* `\xHH`	插入HH(十六进制)所代表的ASCII字符
+
+
+```bash
+[root@mylinuxops ~]# echo -e '\033[43;31;5mmylinuxops\e[0m'
+mylinuxops
+```
+
+#### 字符集和编码
+
+* ASCII码：计算机内部，所有信息最终都是一个二进制值。上个世纪60年代，美国制定了一套字符编码，对英语字符与二进制位之间的关系，做了一个统一规定。ASCII码一共规定了128个字符的编码，占用了一个字节的后面7位，最前面的一位统一规定为0
+
+  > Linux上查看ascii码表
+
+  ```bash
+  [root@mylinuxops ~]# man ascii
+  ```
+
+  
+
+* Unicode：用于表示世界上所有语言中的所有字符。每一个符号都给予一个独一无二的编码数字，Unicode是一个很大的集合，现在的规模可以容纳100多万个符号。Unicode仅仅时一个字符集，规定了每个字符对应的二进制代码，至于这个二进制代码如何存储则没有规定
+
+* Unicode编码方案：
+
+  * UTF-8：变长，1-4个字节
+  * UTF-16：变长，2或4个字节
+  * UTF-32：固定长度，4字节
+
+* UTF-8 是目前互联网上使用最广泛的一种 Unicode编码方式，可变长存储。使用1-4个字节表示一个字符，根据字符的不同变换长度编码规则如下:
+
+  * 对于单个字节的字符，第一位设为0，后面7位对应这个字符的Unicode码。因此，对于英文中的0-127号字符，与ASCII码完全相同。这意味着ASCII码的文档可用于UTF-8编码打开
+  * 对于需要使用N个字节来表示的字符(N>1)，第一个字节的前N位都设为1，第N+1位设为0，剩余的N-1个字符的前两位都设为10，剩下的二进制位则使用这个字符串的Unicode码来填充
+
+* 编码转换和查询
+
+  <http://www.chi2ko.com/tool/CJK.htm>
+
+  <https://javawind.net/tools/native2ascii.jsp?action=transform>
+
+  <http://tool.oschina.net/encode>
