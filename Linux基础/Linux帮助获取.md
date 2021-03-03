@@ -1,13 +1,6 @@
----
-title: Linux帮助获取
-date: 2019-03-04 12:33:34
-categories: Linux基础
-tags:
----
+### Linux帮助获取
 
-Linxu帮助获取方法有许多种类,在获取帮助信息时，内部命令和外部命令的获取方式是有区别的：  
-
-<!-- more -->
+Linxu帮助获取方法有许多种类，在获取帮助信息时，内部命令和外部命令的获取方式是有区别的：  
 
 内部命令：  
 
@@ -116,5 +109,5 @@ lpasswd (1)          - Change group or user password
 ```
 
 注意：
-使用-k,-f选项时首先需要建立资料库才行，此时需要执行mandb(Centos7),makewhatis(makewhatis)
+使用`-k`,`-f`选项时，首先需要建立资料库才行，此时需要执行`mandb`(CentOS7),`makewhatis`(CentOS6)
 

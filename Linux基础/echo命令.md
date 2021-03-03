@@ -46,35 +46,55 @@ hello\nworld
 mylinuxops
 ```
 
-#### 字符集和编码
+#### 命令行扩展
 
-* ASCII码：计算机内部，所有信息最终都是一个二进制值。上个世纪60年代，美国制定了一套字符编码，对英语字符与二进制位之间的关系，做了一个统一规定。ASCII码一共规定了128个字符的编码，占用了一个字节的后面7位，最前面的一位统一规定为0
+把一个命令的输出答应给另外一个命令的参数，可以使用`$()`或者``，来实现。
 
-  > Linux上查看ascii码表
+```bash
+[root@mylinuxops ~]# echo "echo $PS1"
+echo [\u@\h \W]\$ 
+[root@mylinuxops ~]# echo 'echo $PS1'
+echo $PS1
+[root@mylinuxops ~]# echo `echo $PS1`
+[\u@\h \W]\$
+[root@mylinuxops ~]# echo $(echo $PS1)
+[\u@\h \W]\$
+```
 
-  ```bash
-  [root@mylinuxops ~]# man ascii
-  ```
+##### 反向单引号的使用
 
-  
+> 生成一个当前日期的.log文件
 
-* Unicode：用于表示世界上所有语言中的所有字符。每一个符号都给予一个独一无二的编码数字，Unicode是一个很大的集合，现在的规模可以容纳100多万个符号。Unicode仅仅时一个字符集，规定了每个字符对应的二进制代码，至于这个二进制代码如何存储则没有规定
+```bash
+[root@mylinuxops ~]# touch `date +%F`.log
+[root@mylinuxops ~]# ls
+2021-03-03.log 
+```
 
-* Unicode编码方案：
+#### 括号扩展
 
-  * UTF-8：变长，1-4个字节
-  * UTF-16：变长，2或4个字节
-  * UTF-32：固定长度，4字节
+`{}`括号扩展可以用来打印重复字符串的简化形式
 
-* UTF-8 是目前互联网上使用最广泛的一种 Unicode编码方式，可变长存储。使用1-4个字节表示一个字符，根据字符的不同变换长度编码规则如下:
+> 括号的使用方法
 
-  * 对于单个字节的字符，第一位设为0，后面7位对应这个字符的Unicode码。因此，对于英文中的0-127号字符，与ASCII码完全相同。这意味着ASCII码的文档可用于UTF-8编码打开
-  * 对于需要使用N个字节来表示的字符(N>1)，第一个字节的前N位都设为1，第N+1位设为0，剩余的N-1个字符的前两位都设为10，剩下的二进制位则使用这个字符串的Unicode码来填充
+```bash
+[root@mylinuxops ~]# touch file{1,2,3}
+[root@mylinuxops ~]# ls
+2021-03-03.log  anaconda-ks.cfg  file1  file2  file3  original-ks.cfg
+[root@mylinuxops ~]# rm -f file{1,2,3}
+[root@mylinuxops ~]# ls
+2021-03-03.log  anaconda-ks.cfg  original-ks.cfg
+[root@mylinuxops ~]# echo {1..10}
+1 2 3 4 5 6 7 8 9 10
+[root@mylinuxops ~]# echo {a..d}
+a b c d
+[root@mylinuxops ~]# echo {Z..a}
+Z [  ] ^ _ ` a
+[root@mylinuxops ~]# echo {a..z..2}
+a c e g i k m o q s u w y
+[root@mylinuxops ~]# echo {1..10..2}
+1 3 5 7 9
+[root@mylinuxops ~]# echo {a,m,z}.{test,log}
+a.test a.log m.test m.log z.test z.log
+```
 
-* 编码转换和查询
-
-  <http://www.chi2ko.com/tool/CJK.htm>
-
-  <https://javawind.net/tools/native2ascii.jsp?action=transform>
-
-  <http://tool.oschina.net/encode>
