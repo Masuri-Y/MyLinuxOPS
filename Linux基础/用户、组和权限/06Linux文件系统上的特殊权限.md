@@ -157,10 +157,6 @@ chmod 2xxx DIR
 chmod 0xxx|xxx DIR
 ```
 
-##### `SGID`使用示例
-
-
-
 #### `Sticky`位
 
 具有写权限的目录通常用户可以删除该目录中的任何文件，无视该文件的权限或拥有权。这样的做法是不合理的，所以出现`Sticky`位这个权限。
@@ -247,5 +243,58 @@ drwxr-xrwt 2 root root 4096 Mar 13 22:31 test_dir
 rm: cannot remove 'test_dir/wang_file': Operation not permitted
 ```
 
+#### `SGID`结合`Sticky`使用
 
+如果有个`devops`组，`wang`和`masuri`用户均属于此组，`wang`和`masuri`有个合作的项目，要求两个用户均能修改对方的文件，但是不能删除对方的文件。如果光使用`Sticky`位权限，可以实现文件不被删除，但是无法对文件进行修改，需要手动将文件的属组进行更改后才能进行修改。这种操作及其繁琐。
+
+解决方法： 使用`SGID`和`Sticky`结合
+
+创建出`devops`组，将`masuri`和`wang`加入组内
+
+```bash
+[root@mylinuxops data]# groupadd devops
+[root@mylinuxops data]# usermod -aG devops masuri
+[root@mylinuxops data]# usermod -aG devops wang
+```
+
+创建项目目录
+
+```bash
+[root@mylinuxops data]# mkdir devops
+[root@mylinuxops data]# ll
+total 4
+drwxr-xr-x 2 root root 4096 Mar 15 11:22 devops
+# 将属组改为devops，加上SGID和Sticky位权限
+[root@mylinuxops data]# chown :devops devops
+[root@mylinuxops data]# chmod 3775 devops
+[root@mylinuxops data]# ll
+total 4
+drwxrwsr-t 2 root devops 4096 Mar 15 11:22 devops
+```
+
+切换到`wang`和`masuri`用户在`devops`目录下创建出各自的文件
+
+```bash
+[root@mylinuxops data]# su wang
+[wang@mylinuxops data]$ touch devops/wang_file
+[wang@mylinuxops data]$ exit
+exit
+[root@mylinuxops data]# su masuri
+[masuri@mylinuxops data]$ touch devops/masuri_file
+[masuri@mylinuxops data]$ ll devops/
+total 0
+-rw-rw-r-- 1 masuri devops 0 Mar 15 11:33 masuri_file
+-rw-rw-r-- 1 wang   devops 0 Mar 15 11:33 wang_file
+```
+
+使用`masuri`账户修改和删除`wang_file`文件
+
+```bash
+# masuri用户可以对文件wang的文件进行修改，但是不能删除
+[masuri@mylinuxops data]$ echo "test123" >> devops/wang_file 
+[masuri@mylinuxops data]$ cat devops/wang_file 
+test123
+[masuri@mylinuxops data]$ rm -rf devops/wang_file 
+rm: cannot remove 'devops/wang_file': Operation not permitted
+```
 
