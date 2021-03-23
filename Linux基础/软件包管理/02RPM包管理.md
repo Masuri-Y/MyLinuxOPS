@@ -82,6 +82,19 @@ rpm -ivh PACKAGE_FILE ...
   * `%post`: 安装后脚本	--nopost
   * `%preun`: 卸载前脚本	--nopreun
   * `%postun`: 卸载后脚本	--nopostun
+  
+  ```bash
+  # --scripts用来查看应用程序内是否带有脚本
+  [root@mylinuxops ~]# rpm -q --scripts postfix
+  preinstall scriptlet (using /bin/sh):		# 安装前脚本
+  # Add user and groups if necessary
+  /usr/sbin/groupadd -g 90 -r postdrop 2>/dev/null
+  /usr/sbin/groupadd -g 89 -r postfix 2>/dev/null
+  
+  # 如果不想安装安装前脚本，只需要在安装时使用--nopre选项
+  rpm -ivh --nopre postfix
+  # 所有脚本都不使用则使用--noscripts选项。
+  ```
 
 ##### 安装示例
 
@@ -137,6 +150,24 @@ rpm2cpio 包文件 | cpio –itv	预览包内文件
 rpm2cpio 包文件 | cpio –id	"*.conf" 释放包内文件
 ```
 
+[query-options]
+
+* `--changelog`: 查询rpm包的changelog
+
+* `-c`: 查询程序的配置文件
+
+* `-d`: 查询程序的文档
+
+* `-i`: information
+
+* `-l`: 查看指定的程序包安装后生成的所有文件
+
+* `--scripts`: 程序包自带的脚本
+
+* `--provides`: 列出指定程序包所提供的CAPABILITY
+
+* `-R`: 查询指定的程序包所依赖的CAPABILITY
+
 ##### 查询示例
 
 1. 查询某个包是否安装时需要包名
@@ -160,6 +191,83 @@ vsftpd-3.0.3-32.el8.x86_64
 vsftpd-3.0.3-32.el8.x86_64
 ```
 
+4. 查询已经安装包的信息
+
+```bash
+[root@mylinuxops ~]# rpm -qi postfix 
+Name        : postfix
+Epoch       : 2
+Version     : 3.3.1
+Release     : 12.el8
+Architecture: x86_64
+Install Date: Tue 23 Mar 2021 09:46:26 AM CST
+Group       : System Environment/Daemons
+Size        : 4348909
+License     : (IBM and GPLv2+) or (EPL-2.0 and GPLv2+)
+Signature   : RSA/SHA256, Thu 09 Apr 2020 12:00:24 PM CST, Key ID 05b555b38483c65d
+Source RPM  : postfix-3.3.1-12.el8.src.rpm
+Build Date  : Tue 07 Apr 2020 11:11:59 AM CST
+Build Host  : x86-01.mbox.centos.org
+Relocations : (not relocatable)
+Packager    : CentOS Buildsys <bugs@centos.org>
+Vendor      : CentOS
+URL         : http://www.postfix.org
+Summary     : Postfix Mail Transport Agent
+Description :
+Postfix is a Mail Transport Agent (MTA).
+```
+
+5. 查询未安装的包的信息，需要使用-p选项，并且补全路径。
+
+```bash
+[root@mylinuxops ~]# rpm -qpi /misc/cd/AppStream/Packages/vsftpd-3.0.3-32.el8.x86_64.rpm 
+Name        : vsftpd
+Version     : 3.0.3
+Release     : 32.el8
+Architecture: x86_64
+Install Date: (not installed)
+Group       : System Environment/Daemons
+Size        : 351530
+License     : GPLv2 with exceptions
+Signature   : RSA/SHA256, Wed 29 Apr 2020 12:08:42 AM CST, Key ID 05b555b38483c65d
+Source RPM  : vsftpd-3.0.3-32.el8.src.rpm
+Build Date  : Mon 27 Apr 2020 10:04:03 AM CST
+Build Host  : x86-01.mbox.centos.org
+Relocations : (not relocatable)
+Packager    : CentOS Buildsys <bugs@centos.org>
+Vendor      : CentOS
+URL         : https://security.appspot.com/vsftpd.html
+Summary     : Very Secure Ftp Daemon
+Description :
+vsftpd is a Very Secure FTP daemon. It was written completely from
+scratch.
+```
+
+6. 包未安装，要查询安装后会生成的文件列表
+
+```bash
+[root@mylinuxops ~]# rpm -qpl /misc/cd/AppStream/Packages/vsftpd-3.0.3-32.el8.x86_64.rpm 
+/etc/logrotate.d/vsftpd
+/etc/pam.d/vsftpd
+/etc/vsftpd
+/etc/vsftpd/ftpusers
+/etc/vsftpd/user_list
+/etc/vsftpd/vsftpd.conf
+/etc/vsftpd/vsftpd_conf_migrate.sh
+...
+
+# 如果包已经安装，则使用-ql选项来查询。
+```
+
+7. 查询磁盘上的文件来自于哪个包
+
+```bash
+[root@mylinuxops ~]# rpm -qf /bin/cat
+coreutils-8.30-8.el8.x86_64
+```
+
+
+
 #### 包卸载
 
 ```bash
@@ -174,5 +282,93 @@ rpm {-e|--erase} [--allmatches] [--nodeps] [--noscripts] [--notriggers] [--test]
 [root@mylinuxops ~]# rpm -e vsftpd
 [root@mylinuxops ~]# rpm -q vsftpd
 package vsftpd is not installed
+```
+
+#### 包校验
+
+```bash
+rpm {-V|--verify} [select-options] [verify-options] 
+```
+
+* S file Size differs
+* M Mode differs (includes permissions and file type) 
+* 5 digest (formerly MD5 sum) differs
+* D Device major/minor number mismatch
+* L readLink(2) path mismatch U User ownership differs
+* G Group ownership differs
+* T mTime differs
+* P capabilities differ
+
+```bash
+# 验证某个文件距离安装后是否发生变化
+[root@mylinuxops ~]# rpm -V tree
+
+# 以上没有变化所以么有输出，对其进行echo之后
+[root@mylinuxops ~]# echo >> /usr/bin/tree
+[root@mylinuxops ~]# rpm -V tree
+S.5....T.    /usr/bin/tree	# 发生了变化
+```
+
+包来源的合法性验证及完整性验证
+
+* 完整性验证：SHA256
+
+* 来源合法性验证：RSA
+
+公钥加密
+
+* 对称加密：加密、解密使用同一密钥
+* 非对称加密：密钥是成对儿的
+  * public key: 公钥，公开所有人
+  * secret key: 私钥, 不能公开
+
+##### 导入所需要公钥
+
+```bash
+# 导入公钥，CentOS 7发行版光盘提供：RPM-GPG-KEY-CentOS-7
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 
+
+# 查看共要内容
+rpm -qa "gpg-pubkey*"
+
+# 检查包的完整性和签名
+rpm	-K|checksig	rpmfile
+```
+
+#### 包升级
+
+```bash
+rpm {-U|--upgrade} [install-options] PACKAGE_FILE...
+rpm {-F|--freshen} [install-options] PACKAGE_FILE... 
+```
+
+* `upgrade`: 安装有旧版程序包，则"升级"，如果不存在旧版程序包，则"安装"。
+* `freshen`: 安装有旧版程序包，则"省级"，如果不存在旧版程序包，则不执行升级操作。
+
+常用命令
+
+```bash
+rpm -Uvh PACKAGE_FILE ...
+rpm -Fvh PACKAGE_FILE ...
+```
+
+选项：
+
+* `--oldpackage`: 降级
+* `--force`: 强制安装
+
+##### 注意：
+
+1. 不要对内核做升级操作；Linux支持多内核版本并存，因此直接安装新版本内核
+2. 如果原程序包的配置文件安装后曾被修改，升级时，新版本提供的同一个配置文件不会直接覆盖老版本的配置文件，而把新版本文件重命名(FILENAME.rpmnew)后保留
+
+#### rpm数据库
+
+rpm安装的程序都被被记录在数据库中`/var/lib/rpm`
+
+```bash
+rpm {--initdb|--rebuilddb} 
+initdb: 初始化,如果事先不存在数据库，则新建之。否则，不执行任何操作
+rebuilddb：重建已安装的包头的数据库索引目录
 ```
 
