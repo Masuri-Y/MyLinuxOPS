@@ -51,3 +51,103 @@ pvcreate /dev/DEVICE
 ```bash
 pvremove /dev/DEVICE
 ```
+
+#### `vg`管理工具
+
+显示卷组
+
+```bash
+vgs 
+vgdisplay
+```
+
+创建卷组
+
+```bash
+vgcreate [-s #[kKmMgGtTpPeE]] VolumeGroupName PhysicalDevicePath [PhysicalDevicePath...]
+```
+
+管理卷组
+
+```bash
+# 扩展物理卷
+vgextend VolumeGroupName PhysicalDevicePath [PhysicalDevicePath...]
+
+vgreduce VolumeGroupName PhysicalDevicePath [PhysicalDevicePath...]
+```
+
+删除卷组
+
+先做`pvmove`，再做`vgremove`
+
+#### `lv`管理工具
+
+显示逻辑卷
+
+```bash
+lvs 
+Lvdisplay
+```
+
+创建逻辑卷
+
+```bash
+# 指定逻辑卷大小来创建lv
+lvcreate -L #[mMgGtT] -n NAME VolumeGroup
+
+# 指定pe个数来创建lv
+lvcreate -l 60%VG -n mylv testvg lvcreate -l 100%FREE -n yourlv testvg
+```
+
+删除逻辑卷
+
+```bash
+lvremove /dev/VG_NAME/LV_NAME
+```
+
+重设文件系统大小
+
+```bash
+fsadm [options] resize device [new_size[BKMGTEP]] 
+# 扩容后需要扩展文件系统，否则无法识别。
+# ext文件系统使用resize2fs来扩展，xfs需要使用xfs_growfs来扩容
+resize2fs [-f] [-F] [-M] [-P] [-p] device [new_size] 
+xfs_growfs /mountpoint
+```
+
+#### 扩展和缩减逻辑卷
+
+##### 扩展逻辑卷
+
+扩展逻辑卷必须要确保卷组有空间，且扩展无需卸载设备。可在线扩容。
+
+```bash
+# +表示在现有的基础上增加多少容量，不带+表示扩展到多少容量
+lvextend [-r] -L [+]#[mMgGtT] /dev/VG_NAME/LV_NAME
+
+# 扩容后需要扩展文件系统，否则无法识别。若lvextend使用-r选项，以下命令可无需再执行。
+# ext文件系统使用resize2fs来扩展，xfs需要使用xfs_growfs来扩容
+resize2fs /dev/VG_NAME/LV_NAME
+xfs_growfs /mountpoint
+
+# 指定pe的个数来扩容
+lvresize [-r] -l +100%FREE /dev/VG_NAME/LV_NAME
+```
+
+##### 缩减逻辑卷
+
+逻辑卷的缩减是看文件系统的，`xfs`文件系统只支持增长，不支持缩减。ext系列文件系统支持缩减。缩减时需要离线进行，需要卸载。
+
+```bash
+# 卸载逻辑卷
+umount /dev/VG_NAME/LV_NAME 
+# 对lv作检测
+e2fsck -f /dev/VG_NAME/LV_NAME
+# 缩减文件系统，需要指定缩减到多少大小
+resize2fs /dev/VG_NAME/LV_NAME #[mMgGtT] 
+# 缩减逻辑卷
+lvreduce -L [-]#[mMgGtT] /dev/VG_NAME/LV_NAME mount
+```
+
+
+
