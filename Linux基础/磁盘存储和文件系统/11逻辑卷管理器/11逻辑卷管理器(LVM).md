@@ -149,5 +149,100 @@ resize2fs /dev/VG_NAME/LV_NAME #[mMgGtT]
 lvreduce -L [-]#[mMgGtT] /dev/VG_NAME/LV_NAME mount
 ```
 
+#### 跨主机迁移卷组
 
+##### 源计算机上
 
+1. 在旧系统中，`umount`所有卷组上的逻辑卷
+
+2. 禁用卷组
+
+   ```bash
+   vgchange –a n vg0 
+   lvdisplay
+   ```
+
+3. 导出卷组
+
+   ```bash
+   vgexport vg0 
+   pvscan 
+   vgdisplay
+   ```
+
+   拆下旧硬盘
+
+##### 在目标计算机上
+
+4. 在新系统中安装旧硬盘，并导入卷组：
+
+   ```bash
+   vgimport vg0
+   ```
+
+5. 启用卷组
+
+   ```bash
+   vgchange –ay vg0
+   ```
+
+6. `mount`所有卷组上的逻辑卷
+
+#### 逻辑卷管理器快照
+
+快照是特殊的逻辑卷，它是在生成快照时存在的逻辑卷的准确拷贝
+
+对于需要备份或者复制的现有数据临时拷贝以及其它操作来说，快照是最合适的选择
+
+快照只有在它们和原来的逻辑卷不同时才会消耗空间
+
+* 在生成快照时会分配给它一定的空间，但只有在原来的逻辑卷或者快照有所改变才会使用这些空间
+
+* 当原来的逻辑卷中有所改变时，会将旧的数据复制到快照中
+
+* 快照中只含有原来的逻辑卷中更改的数据或者自生成快照后的快照中更改的数据
+
+* 建立快照的卷大小小于等于原始逻辑卷,也可以使用`lvextend`扩展快照
+
+快照就是将当时的系统信息记录下来，就好像照相一般，若将来有任何数据改动了，则原始数据会被移动到快照区，没有改动的区域则由快照区和文件系统共享
+
+![image-20210330153950871](./image-20210330153950871.png)
+
+由于快照区与原本的`LV`共用很多PE的区块，因此快照与被快照的`LV`必须在同一个VG中.系统恢复的时候的文件数量不能高于快照区的实际容量
+
+#### `lVM`快照使用
+
+为现有逻辑卷创建快照
+
+```bash
+# 创建快照-L指定大小，-s指定创建的为快照，-n 指定快照名字，-p r 表示以只读方式创建，对/dev/vg0/data创建快照
+lvcreate -L 100M -s -n data-snapshot -p r /dev/vg0/data
+```
+
+挂载快照
+
+```bash
+mkdir -p /mnt/snap
+# 由于快照卷和逻辑卷uuid是相同的，所以挂载时需要使用nouuid选项来挂载(xfs文件系统用)。ext4文件系统可无需添加nouuid选项。
+mount -o ro,nouuid /dev/vg0/data-snapshot /mnt/snap
+```
+
+恢复快照
+
+```bash
+# 卸载快照卷
+umount /dev/vg0/data-snapshot 
+# 卸载逻辑卷
+umount /dev/vg0/data
+# 快照恢复
+lvconvert --merge /dev/vg0/data-snapshot
+```
+
+删除快照
+
+```bash
+# 卸载快照目录
+umount /mnt/databackup 
+# 删除快照卷
+lvremove /dev/vg0/databackup
+```
