@@ -91,7 +91,7 @@ CentOS 7使用基于硬件，设备拓扑和设置类型命名：
 
 * `p<bus>s<slot>`: enp2s1
 
-##### `CentOS7`修改为传统命令方式
+##### `CentOS7`网卡修改为传统命令方式
 
 在生产环境中，CentOS7的网卡命名方式不利于统一管理，通常需要将其更改为传统的命名方式
 
@@ -109,4 +109,195 @@ CentOS 7使用基于硬件，设备拓扑和设置类型命名：
    ```
 
 3. 重启系统
+
+##### `CentOS7`修改主机名
+
+配置文件:
+
+ `/etc/hostname`，默认没有此文件，通过`DNS`反向解析获取主机名，主机名默认为：`localhost.localdomain`
+
+设置主机名:
+
+```bash
+hostnamectl set-hostname centos7.magedu.com
+```
+
+删除文件`/etc/hostname`，恢复主机名`localhost.localdomain`
+
+#### CentOS7网络配置工具
+
+图形工具：`nm-connection-editor`
+
+字符配置tui工具：`nmtui`
+
+命令行工具：`nmcli`
+
+##### nmcli命令
+
+```bash
+nmcli [ OPTIONS ] OBJECT { COMMAND | help } 
+
+device - show and manage network interfaces 
+nmcli device help
+
+connection - start, stop, and manage network connections
+nmcli connection help
+```
+
+修改IP地址等属性：
+
+```bash
+nmcli connection modify IFACE [+|-]setting.property value
+
+setting.property:
+ipv4.addresses 
+ipv4.gateway 
+ipv4.dns1 
+ipv4.method 
+manual | auto
+```
+
+修改配置文件执行生效：
+
+```bash
+systemctl restart network
+nmcli con reload
+```
+
+nmcli命令生效： 
+
+```bash
+nmcli con down eth0 ;nmcli con up eth0
+```
+
+##### nmcli子命令
+
+| Command                    | Use                                                          |
+| -------------------------- | ------------------------------------------------------------ |
+| nmcli dev status           | List all devices                                             |
+| nmcli con show             | List all connections                                         |
+| nmcli con up "\<ID\>"      | Activate a connection                                        |
+| nmcli con down "\<ID\>"    | Deactive a connection. The connection will restart if autoconnect is yes. |
+| nmcli dev dis \<DEV\>      | Bring down an interface and temporarily  disable autoconnect. |
+| nmcli net off              | Disable all managed interfaces                               |
+| nmcli con add  ..          | Add a new connection.                                        |
+| nmcli con mod "\<ID\>" ... | Modify a connection                                          |
+| nmcli con del "\<ID\>"     | Delete a connection                                          |
+
+##### nmcli命令与配置文件参数
+
+| nmcli con mod                                 | ifcfg-* 文件                                             |
+| --------------------------------------------- | -------------------------------------------------------- |
+| ipv4.method manual                            | BOOTPROTO=none                                           |
+| ipv4.method auto                              | BOOTPROTO=dhcp                                           |
+| ipv4.addresses "192.168.2.1/24 192.168.2.254" | IPADDR=192.168.2.1<br>PREFIX=24<BR>GATEWAY=192.168.2.254 |
+| ipv4.dns 8.8.8.8                              | DNS=8.8.8.8                                              |
+| ipv4.dns-search example.com                   | DOMAIN=example.com                                       |
+| ipv4.ignore-auto-dns true                     | PEERDNS=no                                               |
+| connection.autoconnect yes                    | ONBOOT=yes                                               |
+| connection.id eth0                            | NAME=eth0                                                |
+| connection.interface-name eth0                | DEVICE=eth0                                              |
+| 802-3-ethernet.mac-address ...                | HWADDR=...                                               |
+
+
+
+NeworkManager是管理和监控网络设置的守护进程
+
+设备即网络接口，连接是对网络接口的配置，一个网络接口可有多个连接配置，但同时只有一个连接配置生效
+
+显示所有包括不活动连接
+
+```bash
+nmcli con show
+```
+
+显示所有活动连接
+
+```bash
+nmcli con show --active
+```
+
+显示网络连接配置
+
+```bash
+nmcli con show "System eth0"
+```
+
+显示设备状态
+
+```bash
+nmcli dev status
+```
+
+显示网络接口属性
+
+```bash
+nmcli dev show eth0
+```
+
+创建新连接default，IP自动通过dhcp获取
+
+```bash
+nmcli con add con-name default type Ethernet ifname eth0
+```
+
+删除连接
+
+```bash
+nmcli con del default
+```
+
+创建新连接static ，指定静态IP，不自动连接
+
+```bash
+nmcti con add con-name static ifname eth0 autoconnect no type Ethernet ipv4.addresses 172.25.X.10/24 ipv4.gateway 172.25.X.254
+```
+
+启用static连接配置
+
+```bash
+nmcli con up static
+```
+
+启用default连接配置
+
+```bash
+nmcli con up default
+```
+
+查看帮助
+
+```bash
+nmcli con add help
+```
+
+修改连接设置
+
+```bash
+nmcli con mod "static" connection.autoconnect no 
+nmcli con mod "static" ipv4.dns 172.25.X.254 
+nmcli con mod "static" +ipv4.dns 8.8.8.8
+nmcli con mod "static" -ipv4.dns 8.8.8.8
+nmcli con mod "static" ipv4.addresses "172.16.X.10/24 172.16.X.254" 
+nmcli con mod "static" +ipv4.addresses 10.10.10.10/16
+```
+
+DNS设置，存放在/etc/resolv.conf文件中
+
+`PEERDNS=no`表示当IP通过dhcp自动获取时，dns仍是手动设置，不自动获取等价于下面命令：
+
+```bash
+nmcli con mod "system eth0" ipv4.ignore-auto-dns yes
+```
+
+修改连接配置后，需要重新加载配置
+
+```bash
+nmcli con reload
+nmcli con down "system eth0" # 可被自动激活
+nmcli con up "system eth0"
+nmcli dev dis eth0 # 禁用网卡，访止被自动激活
+```
+
+
 
