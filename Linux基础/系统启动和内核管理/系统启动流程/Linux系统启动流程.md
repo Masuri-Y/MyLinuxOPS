@@ -206,3 +206,51 @@ id:3:initdefault:
 切换级别：`init #`
 
 查看级别：`runlevel`; `who` 
+
+##### `CentOS6 `中`/etc/inittab`和相关文件
+
+```bash
+/etc/inittab  #设置系统默认的运行级别
+/etc/init/control-alt-delete.conf
+/etc/init/tty.conf
+/etc/init/start-ttys.conf
+/etc/init/rc.conf
+/etc/init/prefdm.conf
+```
+
+##### `init`启动流程
+
+根据`/etc/rc.d/rc.sysinit`中所定义的内容来进行启动的初始化，主要按照以下顺序进行执行
+
+1. 设置主机名
+2. 设置欢迎信息
+3. 激活`udev`和`selinux`
+4. 挂载`/etc/fstab`文件中定义的文件系统
+5. 检测根文件系统，并以读写方式重新挂载根文件系统
+6. 设置系统时钟
+7. 激活`swap`设备
+8. 根据`/etc/sysctl.conf`文件设置内核参数
+9. 激活`lvm`及`software raid`设备
+10. 加载额外设备的驱动程序
+11. 清理操作
+
+以上流程执行完毕后，会继续执行`/etc/rc.d/rcN.d/`目录下的脚本，N为当前的运行级别。
+
+`/etc/rc.d/rcN.d`目录下存在众多的脚本文件，分别以K和S加上数字命名，其中K开头表示开机后对应的服务不启动，S开头表示对应的服务开机启动。：
+
+* `K*`: 如`K##*`其中`##`表示运行次序；数字越小，越先运行；数字越小的服务，通常为依赖到别的服务。
+
+* `S*`: `如S##*`其中`##`表示运行次序；数字越小，越先运行；数字越小的服务，通常为被依赖到的服务。
+
+  ```bash
+  # 
+  # 关闭和开启服务的执行次序如下，其会按照字符的大小排序进行关闭进程和开启服务
+  for srv in /etc/rc.d/rcN.d/K*; do
+  	$srv stop
+  done
+  for srv in /etc/rc.d/rcN.d/S*; do
+  	$srv start
+  done
+  ```
+
+  
