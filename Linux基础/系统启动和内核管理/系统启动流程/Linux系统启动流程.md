@@ -243,7 +243,7 @@ id:3:initdefault:
 * `S*`: `如S##*`其中`##`表示运行次序；数字越小，越先运行；数字越小的服务，通常为被依赖到的服务。
 
   ```bash
-  # 
+  # 开机服务启动脚本
   # 关闭和开启服务的执行次序如下，其会按照字符的大小排序进行关闭进程和开启服务
   for srv in /etc/rc.d/rcN.d/K*; do
   	$srv stop
@@ -253,4 +253,198 @@ id:3:initdefault:
   done
   ```
 
-  
+
+注意：自己定义的服务启动脚本的数字往后排，因为服务可能存在依赖关系。所依赖的服务需要先启动，否则将启动失败。
+
+##### `ntsysv`命令
+
+`ntsysv`命令可以用来修改当前模式下，程序是否自动启动。设置完成后下次重启时生效。
+
+```bash
+]# ntsysv
+```
+
+若要修改指定模式下的程序的运行，则需要指定`level`级别
+
+```bash
+]# ntsysv --level=N
+# N表是0-6级别
+```
+
+##### `chkconfig`命令
+
+`ntsysv`一次只能修改一个级别的启动项，使用chkconfig命令可以一次对多个级别的开机启动做修改。
+
+查看服务在所有级别的启动或关闭设定情形: 
+
+```bash
+chkconfig [--list] [name]
+```
+
+添加：
+
+```bash
+chkconfig --add name
+```
+
+删除：
+
+```bash
+chkconfig --del name
+```
+
+修改指定的链接类型: 
+
+```bash
+chkconfig [--level levels] name <on|off|reset>
+# --level LLLL: 指定要设置的级别；省略时表示2345
+```
+
+##### `service`命令
+
+手动管理服务，用来管理本次启动的服务的状态
+
+```bash
+service 服务 start|stop|restart 
+service --status-all
+```
+
+##### 自定义服务启动脚本
+
+`SysV`的服务脚本放置于`/etc/rc.d/init.d` (`/etc/init.d`)
+
+启动脚本有格式要求：
+
+1. 首行为shabang机制
+2. 有`chkconfig`描述行
+3. 需要将脚本存放于`/etc/rc.d/init.d` 目录下
+
+```bash
+#!/bin/bash
+# chkconfig: LLLL nn nn
+
+# LLLL 表示初始在哪个级别下启动，-表示都不启动
+# 第一个nn 表示启动服务时的顺序
+# 第二个nn 表示关闭服务时的顺序
+# 需要注意的是，启动服务数值大时，关闭服务的数字必然小，反之亦然。
+
+```
+
+##### 服务脚本示例
+
+1. 在`/etc/rc.d/init.d/`目录下创建出脚本文件
+
+```bash
+[root@mylinuxops ~]# vim /etc/rc.d/init.d/testsvc
+
+#!/bin/bash
+#
+#chkconfig: - 96 2
+#description: test service
+
+SVC=`basename $0`
+source /etc/rc.d/init.d/functions
+
+start(){
+    if [ -f /var/lock/subsys/$SVC ];then
+        echo "$SVC has been started"
+    else
+        touch /var/lock/subsys/$SVC
+        action "starting $SVC" true
+    fi
+}
+
+stop(){
+    if [ -f /var/lock/subsys/$SVC ];then
+        rm -rf /var/lock/subsys/$SVC
+        action "stopping $SVC" true
+    fi
+}
+
+status(){
+    if [ -f /var/lock/subsys/$SVC ];then
+        echo $SVC is running...
+    else
+        echo $SVC is stopped...
+    fi
+}
+
+case $1 in
+start)
+    $1
+    ;;
+stop)
+    $1
+    ;;
+restart)
+    stop
+    start
+    ;;
+status)
+    $1
+    ;;
+*)
+    echo "Syntex error\nUseage: service $SVC start|stop|restart|status"
+    ;;
+esac
+```
+
+2. 将服务脚本添加`chkconfig`列表
+
+```
+[root@mylinuxops init.d]# chkconfig --add testsvc
+```
+
+3. 将服务设置为开机启动
+
+```bash
+# 由于启动脚本中chkconfig行使用了-所以默认所有级别下开机不启动
+[root@mylinuxops init.d]# chkconfig testsvc on
+```
+
+4. 启动服务
+
+```bash
+# 使用service命令启动服务。
+[root@mylinuxops init.d]# service testsvc start
+```
+
+##### 注意事项
+
+正常级别下，最后启动一个服务`S99local`没有链接至`/etc/rc.d/init.d`一个服务脚本，而是指向了`/etc/rc.d/rc.local`脚本
+
+不便或不需写为服务脚本放置于`/etc/rc.d/init.d/`目录，且又想开机时自动运行的命令，可直接放置于`/etc/rc.d/rc.local`文件中
+
+`/etc/rc.d/rc.local`在指定运行级别脚本后运行，可以根据情况，进行自定义修改
+
+`CentOS7`需要对此文件添加执行权限才能有效。
+
+##### `xinetd`服务
+
+我们有时候希望某些服务开机不自动启动，当需要使用它时，服务会自动启动。这时候就需要一种服务来解决。
+
+这种服务叫做非独立服务，非独立服务启动与否是由一个代理来监控，非独立服务平时的访问量不大，所以平时非独立服务让其运行或不运行都不合适，这时候就需要一个代理服务来监控网络中是否有用户来进行访问此服务。如果有人访问，则将此非独立服务唤醒来对外提供服务，等服务访问完毕后再将其关闭。如果有多个非独立服务，我们只需要一个代理服务来进行监听即可，当有人访问这些非独立服务中的一个时，只需要将其唤醒进行服务就可，当没人服务时将其关闭，只需要存在一个代理服务即可。在系统中这个代理服务就叫做`xinetd`。
+
+瞬态（Transient）服务被xinetd进程所管理，进入的请求首先被`xinetd`代理
+
+配置文件：
+
+```bash
+/etc/xinetd.conf
+/etc/xinetd.d/<service> 与libwrap.so文件链接
+```
+
+用chkconfig控制的服务：
+
+```bash
+chkconfig tftp on
+```
+
+#### `CentOS6`启动过程总结
+
+* 总结：`/sbin/init` --> (`/etc/inittab`) --> 设置默认运行级别 --> 运行系统初始脚本、完成系统初始化 --> (关闭对应下需要关闭的服务)启动需要启动服务 -->设置登录终端
+
+* `CentOS 6` init程序为: `upstart`, 其配置文件：`/etc/inittab, /etc/init/*.conf`，配置文件的语法 遵循 upstart配置文件语法格式，和CentOS5不同。
+
+![Linux启动流程图](Linux启动流程图-1618827729806.jpg)
+
