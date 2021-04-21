@@ -297,6 +297,7 @@ ceo:bin
 ceo:daemon
 ```
 #### 三、`printf`
+
 `printf`格式化输出：
 
 ```bash
@@ -304,13 +305,13 @@ printf "FORMAT" ,item1,item2,...
 ```
 使用`printf`时，需要注意以下3点：
 
-1. 使用printf时必须指定FORMAT
+1. 使用`printf`时必须指定FORMAT
 
-2. printf不会自动换行，需要显式给出换行控制符`\n`
+2. `printf`不会自动换行，需要显式给出换行控制符`\n`
 
 3. FORMAT中需要分别为后面每个item指定格式符
 
-   printf的格式符有以下：
+`printf`的格式符有以下：
 
 |格式符|说明|
 |:-|:-|
@@ -322,7 +323,8 @@ printf "FORMAT" ,item1,item2,...
 |%s|显示字符串|
 |%u|无符号整数|
 |%%|显示%自身|
-printf中除了格式符还有修饰符：
+`printf`中除了格式符还有修饰符：
+
 |修饰符|说明|
 |:-|:-|
 |#[.#]|第一个数字控制显示的宽度；第二个#标识小数点后精度，%3.1f|
@@ -364,9 +366,10 @@ this is 123.222    345.230
 ```
 
 
-### 四、操作符
-awk还支持各种操作符如算数操作符、字符串操作符、赋值操作符、比较操作符、模式匹配操作符
-#### 1.算数操作符
+#### 四、操作符
+`awk`还支持各种操作符如算数操作符、字符串操作符、赋值操作符、比较操作符、模式匹配操作符
+
+##### 1.算数操作符
 算数操作符有+、-、*、/、^、%，如：
 x+y,x-y,x*y,x/y,x^y,x%y
 示例1：
@@ -382,7 +385,7 @@ x+y,x-y,x*y,x/y,x^y,x%y
 [root@centos7 ~]# awk 'BEGIN{I=20;I=-I;print I}'
 -20
 ```
-#### 2.赋值操作符：
+##### 2.赋值操作符
 赋值操作符有：=，+=，-=，*=，/=，%=，^=,++,--
 示例1：
 ```bash
@@ -393,10 +396,10 @@ x+y,x-y,x*y,x/y,x^y,x%y
 [root@centos7 ~]# awk 'BEGIN{I=10;I*=2;print I}'
 20
 ```
-#### 3.比较操作符和模式匹配符
-比较操作符和模式匹配符常用在awk的行过滤pattern中，Pattern为空时所有都符合条件
+##### 3.比较操作符和模式匹配符
+比较操作符和模式匹配符常用在`awk`的行过滤`pattern`中，`Pattern`为空时所有都符合条件
 
-pattern中可以添加比较符号和模式匹配
+`pattern`中可以添加比较符号和模式匹配
 
 比较符号有：==(等于)，!=(不等于)，>(大于)，>=(大于等于)，<(小于)，<=(小于等于)
 
@@ -408,7 +411,7 @@ pattern中可以添加比较符号和模式匹配
 
 示例1:
 
-取出连接主机的IP
+取出连接主机的`IP`
 
 ```bash
 [root@centos7 ~]# ss -tn | awk -F" +|:" 'NR>1{print $(NF-2)}' 
@@ -416,7 +419,7 @@ pattern中可以添加比较符号和模式匹配
 ```
 示例2:
 
-取出用户列表中UID大于1000的用户和ID
+取出用户列表中`UID`大于1000的用户和`ID`
 
 ```bash
 [root@centos7 ~]# awk -F: '$3>1000{print $1,$3}' /etc/passwd
@@ -424,7 +427,7 @@ nfsnobody 65534
 ```
 示例3:
 
-取出ip地址
+取出`ip`地址
 
 ```bash
 [root@centos7 ~]# ifconfig | awk 'NR==2{print $2}'
@@ -457,13 +460,13 @@ UUID=15dcd896-b7cf-48d0-b8bd-4c0b0f2c62b2 /boot                   xfs     defaul
 UUID=4b6e1813-2c46-402a-869a-02cbbcb76ade /data                   xfs     defaults        0 0
 UUID=0995b444-48c1-4423-92bc-2deda0d3c082 swap                    swap    defaults        0 0
 ```
-#### 4.逻辑操作符  
+##### 4.逻辑操作符  
 
-逻辑操作符：与&&，或||，非！  
+逻辑操作符：与`&&`，或`||`，非`!` 
 
 示例1：  
 
-取出/etc/passwd非nologin结尾的行
+取出`/etc/passwd`非`nologin`结尾的行
 
 ```bash
 [root@centos7 ~]# awk '!/nologin$/' /etc/passwd
@@ -489,16 +492,16 @@ masuri:x:1000:1000:masuri:/home/masuri:/bin/bash
 [root@centos7 ~]# netstat -tn | awk -F" +|:" '/ESTABLISHED/{print $6}' | sort | uniq -c | sort -nr | head -3
 ```
 
-#### 5.三目表达式  
+##### 5.三目表达式  
 三目表达式格式：  
 
-selector?if-ture-expression:if-false-expression  
+`selector?if-ture-expression:if-false-expression  `
 
-判断selector是否为真，如果为真则执行if-ture语句，不为真则执行if-false语句。  
+判断selector是否为真，如果为真则执行`if-ture`语句，不为真则执行if-false语句。  
 
 示例1：  
 
-在Uid大于等于1000的用户前添加commom user，小于1000的添加system user  
+在`Uid`大于等于1000的用户前添加`commom user`，小于1000的添加`system user`
 
 ```bash
 [root@centos7 ~]# awk -F: '$3>=1000?USER="COMMOM USER:":USER="SYSTEM USER:"{print USER$1}' /etc/passwd
@@ -509,12 +512,13 @@ SYSTEM USER:ntp
 SYSTEM USER:tcpdump
 COMMOM USER:masuri
 ```
-### 五、PATTERN部分总结
-PATTEN:awk在执行时会根据pattern条件，过滤匹配的行，再做处理。  
+#### 五、PATTERN部分总结
+
+`PATTEN:awk`在执行时会根据`pattern`条件，过滤匹配的行，再做处理。  
 
 pattern的条件可以有以下几种：  
 
-#### 1.空  
+##### 1.空  
 如果pattern部分为空，则默认匹配每一行    
 
 示例：打印所有行  
@@ -534,10 +538,10 @@ UUID=15dcd896-b7cf-48d0-b8bd-4c0b0f2c62b2 /boot                   xfs     defaul
 UUID=4b6e1813-2c46-402a-869a-02cbbcb76ade /data                   xfs     defaults        0 0
 UUID=0995b444-48c1-4423-92bc-2deda0d3c082 swap                    swap    defaults        0 0
 ```
-#### 2.正则表达式    
-/regular expression/:仅处理能够被模式匹配到的行，需要用//括起来  
+##### 2.正则表达式    
+`/regular expression/`:仅处理能够被模式匹配到的行，需要用//括起来  
 
-示例：找出/etc/passwd中以g开头的行的第1字段和第3字段  
+示例：找出`/etc/passwd`中以g开头的行的第1字段和第3字段  
 
 ```bash
 [root@centos7 ~]# awk -F: '/^g/{print $1,$3}' /etc/passwd
@@ -547,8 +551,8 @@ geoclue 992
 gdm 42
 gnome-initial-setup 989
 ```
-#### 3.关系表达式  
-relational expression: 关系表达式，结果为“真”才会被处理  
+##### 3.关系表达式  
+`relational expression`: 关系表达式，结果为“真”才会被处理  
 
 真和假的定义：  
 
@@ -595,10 +599,11 @@ relational expression: 关系表达式，结果为“真”才会被处理
 4
 5
 ```
-#### 4.行范围  
-pattern可以使用行范围进行匹配  
+##### 4.行范围  
 
-/pat1/,/pat2/ 不支持直接给出数字格式   
+`pattern`可以使用行范围进行匹配  
+
+`/pat1/,/pat2/`: 不支持直接给出数字格式   
 
 示例：打印b开头的行到f开头的行
 
@@ -616,10 +621,10 @@ operator:x:11:0:operator:/root:/sbin/nologin
 games:x:12:100:games:/usr/games:/sbin/nologin
 ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
 ```
-#### 5.BEGIN/END模式  
-BEGIN{}：仅在开始处理文件中的文本之前执行一次  
+##### 5.`BEGIN/END`模式  
+`BEGIN{}`：仅在开始处理文件中的文本之前执行一次  
 
-END{}：仅在文本处理完成之后执行一  
+`END{}`：仅在文本处理完成之后执行一  
 
 示例1：使用BEGIN来添加表头，做格式化输出。
 
@@ -641,12 +646,14 @@ END{}：仅在文本处理完成之后执行一
 --------------------------------------
 |shutdown                       |6         
 ```
-### 六、awk控制语句
-流程控制语句是任何程序设计语言都不能缺少的部分。任何好的语言都有一些执行流程控制的语句。awk提供的完备的流程控制语句类似于C语言，这给我们编程带来了极大的方便。  
-awk控制语句有：if-else，while循环，do-while循环，for循环，break，continue，delete array[index]，delete array,exit
-#### 1.if-else
+#### 六、`awk`控制语句
+流程控制语句是任何程序设计语言都不能缺少的部分。任何好的语言都有一些执行流程控制的语句。`awk`提供的完备的流程控制语句类似于C语言，这给我们编程带来了极大的方便。  
+`awk`控制语句有：`if-else`，`while`循环，`do-while`循环，`for`循环，`break`，`continue`，`delete array[index]`，`delete array`, `exit`
+
+##### 1.`if-else`
  使用场景：对awk取得的整行或某个字段做条件判断   
  语法：
+
 ```bash
  if(condition){statement;…}[else statement]    
  if(condition1){statement1}else if(condition2){statement2}else{statement3} 
@@ -687,7 +694,7 @@ masuri 1000
 [root@centos7 ~]# awk -v score=80 'BEGIN{if(score<60){print "no pass"}else if(score<=80){print "just so so"}else if(score>80){print "good"}}'
 just so so
 ```
-#### 2.while循环
+##### 2.`while`循环
 使用场景：  
 1.对一行内的多个字段逐一类似处理时使用  
 2.对数组中的各元素逐一处理时使用    
@@ -717,7 +724,7 @@ root 4
 [root@centos7 ~]# awk 'BEGIN{i=1;while(i<=100){sum+=i;i++}print sum}'
 5050
 ```
-#### 3.for循环
+##### 3.`for`循环
 常用语法：
 ```bash
 for(expr1;expr2;expr3){statement;...}
@@ -727,12 +734,12 @@ for(expr1;expr2;expr3){statement;...}
 ```bash
     for(i in arrary){for body}
 ```
-示例1：for循环1+到100
+示例1：`for`循环1+到100
 ```bash
 [root@centos7 ~]# awk 'BEGIN{for(i=1;i<=100;i++){sum+=i}print sum}'
 5050
 ```
-#### 4.break和continue
+##### 4.`break`和`continue`
 break为提前结束循环
 continue为提前结束本次循环，进入下一次循环  
 示例：将1到100的偶数相加
@@ -751,7 +758,7 @@ continue为提前结束本次循环，进入下一次循环
 [root@centos7 ~]# awk 'BEGIN{for(i=1;i<=100;i++){if(i==50){break};if(i%2==0){sum+=i}}print sum}'
 600
 ```
-#### 5.next
+##### 5.`next`
 next是提前结束对本行的处理直接进入下一行的处理，break跳出的是awk自身的循环。
 示例：
 打印Uid为偶数的行
@@ -782,13 +789,19 @@ tcpdump 72
 masuri 1000
 ```
 
-### 七、awk数组
-awk数组为关联数组：array[index-expression]  
+#### 七、`awk`数组
+
+`awk`数组为关联数组：`array[index-expression]`
+
 index-expression为数组下标  
+
 数组在使用时需注意以下几点：  
-1.数组下标可使用任意字符串;字符串要使用双引号括起来  
-2.如果某数组元素事先不存在，在引用时，awk会自动创建此元素，并将其初始化为“空串”  
-3.若要判断数组中是否存在某元素，要时用“index in array”格式进行遍历
+
+1. 数组下标可使用任意字符串;字符串要使用双引号括起来  
+
+2. 如果某数组元素事先不存在，在引用时，`awk`会自动创建此元素，并将其初始化为“空串”  
+
+3. 若要判断数组中是否存在某元素，要时用“index in array”格式进行遍历
 
 示例：给数组赋值，和输出数组
 ```bash
@@ -802,7 +815,9 @@ laowang
 for(var in array){for-body}  
 ```
 注意：var会遍历arry的每个索引  
+
 示例：遍历数组，可以先将数组下标赋给i
+
 ```bash
 [root@centos7 ~]# awk 'BEGIN{arr["ceo"]="mage";arr["cto"]="laowang";for(i in arr){print arr[i]}}'
 mage
@@ -810,7 +825,9 @@ laowang
 ```
 
 示例2：数组的其他用法：去重  
+
 创建一个文件输入以下内容，然后执行awk命令
+
 ```bash
 [root@centos7 ~]# cat f1.txt 
 aa
@@ -828,7 +845,9 @@ cc
 22
 ```
 此方法比较绕，读入第一行aa作为数组line的下标，此时数组内的值为空“假”取反后为真打印此行，然后再执行++，此时line内的值为1，当再次遇到aa的行时，数组line[aa]内有值1，取反后为假不输出，然后再++此时[aa]内值为2
+
 验证：
+
 ```bash
 [root@centos7 ~]# awk '{!line[$0]++;print $0,line[$0]}' f1.txt
 aa 1
@@ -840,7 +859,9 @@ aa 2
 11 2
 ```
 示例：数组的高级用法  
+
 取连接状态数
+
 ```bash
 [root@centos7 ~]# netstat -tna | awk '/^tcp/{state[$NF]++}END{for(i in state){print i,state[i]}}'       #state[$NF]++表示将最后一个字段作为数组的下标，然后对里面的值+1，当再次遇到相同的下标时，再次加1
 LISTEN 11
@@ -890,27 +911,30 @@ ESTABLISHED 1
 m 90
 f 98.5
 ```
-### 八、字符串处理
-1.length([s]):返回字符串的长度
+#### 八、字符串处理
+
+1.`length([s])`:返回字符串的长度
 示例：
+
 ```bash
 [root@centos7 ~]# awk 'BEGIN{print length("abc")}'
 3
 ```
-2.sub(r,s,[t]):对t字符串搜索r表示的模式匹配的内容，并替换为s所表示的内容(只替换第一次匹配到的)
+2.`sub(r,s,[t])`:对t字符串搜索r表示的模式匹配的内容，并替换为s所表示的内容(只替换第一次匹配到的)
 示例：
 
 ```bash
 [root@centos7 ~]# echo "2008:08:08 08:08:08" | awk '{sub(/:/,"-",$1);print $0}'
 2008-08:08 08:08:08
 ```
-3.gsub(r,s,[t]):对t字符串搜索r表示的模式匹配的内容，并全部替换为s所表示的内容
+3.`gsub(r,s,[t])`:对t字符串搜索r表示的模式匹配的内容，并全部替换为s所表示的内容
 示例：
+
 ```bash
 [root@centos7 ~]# echo "2008:08:08 08:08:08" | awk '{gsub(/:/,"-",$1);print $0}'
 2008-08-08 08:08:08
 ```
-4.splits(s,arry,[r]):以r为分隔符，切割字符串，并将切割后的字符串保存至array做表示的数组中，第一个索引值为1，第二个索引值为2，...
+4.`splits(s,arry,[r])`:以r为分隔符，切割字符串，并将切割后的字符串保存至array做表示的数组中，第一个索引值为1，第二个索引值为2，...
 示例：
 
 ```bash
@@ -926,7 +950,7 @@ f 98.5
 [root@centos7 ~]# awk '/^ESTAB/{split($NF,ip,":");count[ip[1]]++}END{for(i in count){print i,count[i]}}' ss.log 
 192.168.172.1 465
 ```
-### 九、自定义函数
+#### 九、自定义函数
 
 语法：  
 ```bash
@@ -936,7 +960,8 @@ function name (parameter,parameter,...){
 }
 ```
 示例：
-awk函数定义方法
+`awk`函数定义方法
+
 ```bash
 [root@centos7 ~]# cat fun.awk 
 #!/bin/awk -f
@@ -946,16 +971,19 @@ function max(x,y){      #x,y为行参
 }
 BEGIN{print max(a,b)}   #a,b为实参
 ```
-awk函数调用
+`awk`函数调用
+
 ```bash
 [root@centos7 ~]# awk -v a=40 -v b=50 -f fun.awk
 50
 [root@centos7 ~]# 
 ```
 
-### 十、awk中调用shell命令
-system命令：空格是awk中的字符串连接符，如果system中需要使用awk中的变量可以使用空格分隔，或者说除了awk的变量外其他一律用“”引用起来  
+#### 十、`awk`中调用`shell`命令
+`system`命令：空格是`awk`中的字符串连接符，如果`system`中需要使用`awk`中的变量可以使用空格分隔，或者说除了`awk`的变量外其他一律用“”引用起来  
+
 示例1：调用系统命令
+
 ```bash
 [root@centos7 ~]# awk 'BEGIN{system(hostname)}'
 [root@centos7 ~]# awk 'BEGIN{system("hostname")}'
@@ -979,11 +1007,15 @@ sh: echohello: command not found
 [root@centos7 ~]# awk -v var=hello 'BEGIN{system("echo "var)}'
 hello
 ```
-### 十一、awk脚本  
-awk脚本格式：  
-1.脚本后缀为.awk  
-2.脚本首行加上#!/bin/awk -f  
+#### 十一、`awk`脚本  
+`awk`脚本格式：  
+
+1.脚本后缀为`.awk` 
+
+2.脚本首行加上`#!/bin/awk -f `
+
 3.给脚本添加执行权限  
+
 示例： 
 
 ```bash
@@ -995,13 +1027,15 @@ awk脚本格式：
 [root@centos7 ~]# ./test.awk -F: /etc/passwd
 nfsnobody 65534
 ```
-### 十二、向awk脚本传递参数
+#### 十二、向`awk`脚本传递参数
 使用格式：  
 ```bash
 awkfile var=value var2=value2 ... inputfile
 ```
-注意：在BEGIN过程中不可用。直到首行输入完成以后，变量才可用。可以通过-v参数，让awk在执行BIGIN之前得到变量的值。命令行中每一个指定的变量都需要一个-v参数。  
+注意：在BEGIN过程中不可用。直到首行输入完成以后，变量才可用。可以通过-v参数，让`awk`在执行`BIGIN`之前得到变量的值。命令行中每一个指定的变量都需要一个`-v`参数。  
+
 示例：
+
 创建一个脚本，此处以上一个脚本为例进行修改。
 
 ```bash
