@@ -648,22 +648,24 @@ ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
 ```
 #### 六、`awk`控制语句
 流程控制语句是任何程序设计语言都不能缺少的部分。任何好的语言都有一些执行流程控制的语句。`awk`提供的完备的流程控制语句类似于C语言，这给我们编程带来了极大的方便。  
+
 `awk`控制语句有：`if-else`，`while`循环，`do-while`循环，`for`循环，`break`，`continue`，`delete array[index]`，`delete array`, `exit`
 
 ##### 1.`if-else`
- 使用场景：对awk取得的整行或某个字段做条件判断   
+ 使用场景：对`awk`取得的整行或某个字段做条件判断   
+
  语法：
 
 ```bash
  if(condition){statement;…}[else statement]    
  if(condition1){statement1}else if(condition2){statement2}else{statement3} 
 ```
-示例：1.打印出/etc/passwd下uid大于1000的行
+示例：1.打印出`/etc/passwd`下`uid`大于1000的行
 ```bash
 [root@centos7 ~]# awk -F: '{if($3>1000)print $0}' /etc/passwd
 nfsnobody:x:65534:65534:Anonymous NFS User:/var/lib/nfs:/sbin/nologin
 ```
-示例2：如果Uid为偶数则打印出uid和用户名
+示例2：如果`Uid`为偶数则打印出`uid`和用户名
 ```bash
 [root@centos7 ~]# awk -F: '{if($3%2==0)print $1,$3}' /etc/passwd
 root 0
@@ -696,9 +698,13 @@ just so so
 ```
 ##### 2.`while`循环
 使用场景：  
-1.对一行内的多个字段逐一类似处理时使用  
-2.对数组中的各元素逐一处理时使用    
+
+1. 对一行内的多个字段逐一类似处理时使用  
+
+2. 对数组中的各元素逐一处理时使用    
+
 语法：
+
 ```bash
 while(condition){statement;...}
 ```
@@ -814,9 +820,9 @@ laowang
 ```bash
 for(var in array){for-body}  
 ```
-注意：var会遍历arry的每个索引  
+注意：var会遍历`arry`的每个索引  
 
-示例：遍历数组，可以先将数组下标赋给i
+示例：遍历数组，可以先将数组下标赋给`i`
 
 ```bash
 [root@centos7 ~]# awk 'BEGIN{arr["ceo"]="mage";arr["cto"]="laowang";for(i in arr){print arr[i]}}'
@@ -826,7 +832,7 @@ laowang
 
 示例2：数组的其他用法：去重  
 
-创建一个文件输入以下内容，然后执行awk命令
+创建一个文件输入以下内容，然后执行`awk`命令
 
 ```bash
 [root@centos7 ~]# cat f1.txt 
@@ -844,7 +850,7 @@ cc
 11
 22
 ```
-此方法比较绕，读入第一行aa作为数组line的下标，此时数组内的值为空“假”取反后为真打印此行，然后再执行++，此时line内的值为1，当再次遇到aa的行时，数组line[aa]内有值1，取反后为假不输出，然后再++此时[aa]内值为2
+此方法比较绕，读入第一行`aa`作为数组line的下标，此时数组内的值为空“假”取反后为真打印此行，然后再执行++，此时`line`内的值为1，当再次遇到`aa`的行时，数组`line[aa]`内有值1，取反后为假不输出，然后再++此时`[aa]`内值为2
 
 验证：
 
@@ -945,7 +951,7 @@ f 98.5
 2 08
 3 08 08
 ```
-用函数来实现ip连接次数
+用函数来实现`ip`连接次数
 ```bash
 [root@centos7 ~]# awk '/^ESTAB/{split($NF,ip,":");count[ip[1]]++}END{for(i in count){print i,count[i]}}' ss.log 
 192.168.172.1 465
@@ -996,7 +1002,9 @@ access_log  anaconda-ks.cfg  fun.awk  ss.lg		    test1
 [root@centos7 ~]# 
 ```
 示例2：输出变量的方法  
+
 调用双引号输出变量时，变量必须放在双引号外，如果放在双引号内，变量只会被当作字符输出
+
 ```bash
 [root@centos7 ~]# awk -v var=hello 'BEGIN{system("echo var")}'
 var
@@ -1010,11 +1018,11 @@ hello
 #### 十一、`awk`脚本  
 `awk`脚本格式：  
 
-1.脚本后缀为`.awk` 
+1. 脚本后缀为`.awk` 
 
-2.脚本首行加上`#!/bin/awk -f `
+2. 脚本首行加上`#!/bin/awk -f `
 
-3.给脚本添加执行权限  
+3. 给脚本添加执行权限  
 
 示例： 
 
