@@ -260,3 +260,87 @@ vetha75e35d Link encap:Ethernet  HWaddr D6:3B:12:F4:32:F5
 CentOS8
 ```
 
+### 其他网络相关参数
+
+1. 在容器运行时使用`--hostname`为容器注入主机名
+
+```bash
+[root@CentOS8 ~]# docker run --name bbox2 -it --hostname mylinuxops --rm busybox:latest /bin/sh
+/ # hostname
+mylinuxops
+```
+
+2. 在容器运行时使用`--add-host`注入主机名的解析，`--add-host`选项可以重复使用多次，注入多条解析记录。
+
+```bash
+[root@CentOS8 ~]# docker run --name bbox2 -it --hostname bbox.mylinuxops.com --rm --add-host gw.mylinuxops.com:172.16.11.63 --add-host js.mylinuxops.com:172.16.11.61 busybox
+/ # cat /etc/hosts
+127.0.0.1       localhost
+::1     localhost ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+172.16.11.63    gw.mylinuxops.com
+172.16.11.61    js.mylinuxops.com
+172.17.0.2      bbox.mylinuxops.com bbox
+```
+
+3. 容器运行时，使用`--dns`选项向容器中注入`DNS`服务器，使用`--dns-search`注入搜索域.
+
+```bash
+[root@CentOS8 ~]# docker run --name bbox2 -it --hostname bbox.mylinuxops.com --rm --add-host gw.mylinuxops.com:172.16.11.63 --dns 172.16.11.1 --dns-search mylinuxops.com busybox
+/ # cat /etc/resolv.conf
+search mylinuxops.com
+nameserver 172.16.11.1
+```
+
+4. `-p`选项使用格式
+
+   1. `-p <containerPort>`: 将指定的容器端口`<containerPort>`映射到主机所有地址的一个动态端口
+
+   ```bash
+   # 将容器内的80端口映射到宿主机的动态端口
+   [root@CentOS8 ~]# docker run --name tinyweb -d -p 80 nginx:alpine
+   8c21ba59714f85abb6f79712da783f36c05baf63befe1eb51f8d642530991f55
+   
+   # 将容器内的80端口映射到宿主及的动态端口49153
+   [root@CentOS8 ~]# docker ps -a
+   CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS                                     NAMES
+   8c21ba59714f   nginx:alpine   "/docker-entrypoint.…"   5 seconds ago   Up 3 seconds   0.0.0.0:49153->80/tcp, :::49153->80/tcp   tinyweb
+   
+   # 查看那宿主机上的端口
+   [[root@CentOS8 ~]# ss -tnl | grep "49153"
+   LISTEN    0         20480              0.0.0.0:49153            0.0.0.0:*
+   LISTEN    0         20480                 [::]:49153               [::]:*
+   ```
+
+   2. `-p <hostPort>:<containerPort>`: 将容器的端口`<containerPort>`映射到指定的宿主机端口`<hostPort>`
+
+   ```bash
+   # 将容器内的80端口映射给宿主机的80端口
+   [root@CentOS8 ~]# docker run --name tinyweb -d --rm -p 80:80 nginx:alpine
+   969db1943b12c8d828c0121cfd83b3093f5a430ce4b7ace703673a7b27b92030
+   
+   # 查看容器的运行状态。
+   [root@CentOS8 ~]# docker ps -a
+   CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                               NAMES
+   969db1943b12   nginx:alpine   "/docker-entrypoint.…"   19 seconds ago   Up 17 seconds   0.0.0.0:80->80/tcp, :::80->80/tcp   tinyweb
+   
+   # 宿主计算上80端口已经开启
+   [root@CentOS8 ~]# ss -tnl | grep 80
+   LISTEN    0         20480              0.0.0.0:80               0.0.0.0:*
+   LISTEN    0         20480                 [::]:80                  [::]:*
+   ```
+
+   3. `-p <ip>::<containerPort>`: 将指定的容器端口`<containerPort>`映射至主机指定`<ip>`的动态端口
+
+   ```bash
+   ```
+
+   4. `-p <ip>:<hostPort>:<containerPort>`: 将指定的容器端口`<containerPort>`映射至主机指定`<ip>`的端口`<hostPort>`
+
+   ```bash
+   ```
+
+   
