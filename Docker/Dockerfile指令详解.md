@@ -418,5 +418,108 @@ RUN ["<executable>","<param1>","<param2>"]
 #### RUN指令示例
 
 ```bash
+# 创建工作目录
+[root@CentOS8 ~]# mkdir ap
+[root@CentOS8 ~]# cd ap/
+
+# 创建dockerfile文件
+[root@CentOS8 ap]# vim Dockerfile
+FROM centos:7
+LABEL maintanier="Masuri<438214186@qq.com>"
+RUN yum makecache && \
+    yum install httpd php php-mysql -y && \
+    yum clean all && \
+    rm -rf /var/cache/yum/*
+
+# 构建镜像
+[root@CentOS8 ap]# docker build . -t masuri/apache-php:v0.01
+
+# 运行容器，验证php和httpd已安装
+[root@CentOS8 ap]# docker run --name web1 --rm -it masuri/apache-php:v0.01 /bin/bash
+[root@d7428d971121 /]# rpm -q httpd php
+httpd-2.4.6-97.el7.centos.x86_64
+php-5.4.16-48.el7.x86_64
 ```
+
+### 12.`CMD`指令
+
+* 类似于`RUN`指令，`CMD`指令也可用于运行任何命令或应用程序，不过，二者的运行时间点不同
+  * `RUN`指令运行于镜像文件构建过程，而`CMD`指令运行于基于`Dockerfile`构建出的新镜像文件启动一个容器时。
+  * `CMD`指令的首要目的在于为启动的容器指定默认要运行的程序，而其运行结束后，容器也将终止；不过，`CMD`指定的命令其可以被docker run的命令行选项所覆盖
+  * 在`Dockerfile`中可以存在多个`CMD`指令，但仅最后一个会生效
+
+格式
+
+```bash
+CMD <command>
+# 或
+CMD ["<executable>","param1","param2"]
+# 或
+CMD ["param1","param2"]
+```
+
+* 前两种语法格式的意义同`RUN`
+* 第三种则用于为`ENTRYPOINT`指令提供默认参数
+
+#### `CMD`指令示例
+
+```bash
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
