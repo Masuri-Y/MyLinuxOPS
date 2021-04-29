@@ -336,11 +336,117 @@ nameserver 172.16.11.1
    3. `-p <ip>::<containerPort>`: 将指定的容器端口`<containerPort>`映射至主机指定`<ip>`的动态端口
 
    ```bash
+   [root@CentOS8 ~]# docker run --name tinyweb --rm -d -p 172.16.11.63::80 nginx:alpine
+   3665182641d7b8ac622269bc37c3d7c7116c2e4137d684bfbcf4d399d973ea09
+   [root@CentOS8 ~]# docker port tinyweb
+   80/tcp -> 172.16.11.63:49153
    ```
-
-   4. `-p <ip>:<hostPort>:<containerPort>`: 将指定的容器端口`<containerPort>`映射至主机指定`<ip>`的端口`<hostPort>`
-
-   ```bash
-   ```
-
    
+   4. `-p <ip>:<hostPort>:<containerPort>`: 将指定的容器端口`<containerPort>`映射至主机指定`<ip>`的端口`<hostPort>`
+   
+   ```bash
+   [root@CentOS8 ~]# docker run --name tinyweb -d --rm -p 172.16.11.63:80:80 nginx:alpine
+   6daeebc3bb1fe22d1cc163786a306b0ca618643814800d01a14a17ec92f5af77
+   [root@CentOS8 ~]# docker port tinyweb
+   80/tcp -> 172.16.11.63:80
+   ```
+   
+
+### `docker`自建网络
+
+1. 使用`docker network create`创建出网络
+
+```bash
+[root@CentOS8 ~]# docker network create --subnet 10.10.0.0/24 --gateway 10.10.0.1 mybr0
+52d5f694537615125d090970bc87e5fea017088e9b5fabce2c9d786946db1dfb
+[root@CentOS8 ~]# docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+a9dd9148cc49   bridge    bridge    local
+5ee81e8f87a3   host      host      local
+52d5f6945376   mybr0     bridge    local
+9bd2843207da   none      null      local
+
+# br开头的网卡为新建的网络
+[root@CentOS8 ~]# ifconfig
+br-52d5f6945376: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 10.10.0.1  netmask 255.255.255.0  broadcast 10.10.0.255
+        ether 02:42:b6:02:c0:e7  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+```
+
+2. 更改网卡名
+
+```bash
+[root@CentOS8 ~]# docker run --name tinyweb --rm --network mybr0 -it nginx:alpine /bin/sh
+557b49eef280d80ea4be651e5b2cfeeeff711ea60e39f21ebaeffc3c45c5d506
+# 查看IP
+/bin/sh: ifocnfig: not found
+/ # ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+52: eth0@if52: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP
+    link/ether 02:42:0a:0a:00:02 brd ff:ff:ff:ff:ff:ff
+    inet 10.10.0.2/24 brd 10.10.0.255 scope global eth0
+       valid_lft forever preferred_lft forever
+```
+
+3. 将`tinyweb`这个容器连接到默认的桥接网络
+
+```bash
+[root@CentOS8 ~]# docker network connect bridge tinyweb
+# 拆除网络需要使用 docker network disconnect命令
+[root@CentOS8 ~]# docker exec tinyweb ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+52: eth0@if53: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP
+    link/ether 02:42:0a:0a:00:02 brd ff:ff:ff:ff:ff:ff
+    inet 10.10.0.2/24 brd 10.10.0.255 scope global eth0
+       valid_lft forever preferred_lft forever
+# 默认桥接网络也加入容器内了
+54: eth1@if55: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP
+    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth1
+       valid_lft forever preferred_lft forever
+```
+
+### 修改`docker`默认的`docker0`桥
+
+修改`docker`默认的`docker0`桥需要修改其配置文件：`/etc/docker/daemon.json`
+
+```bash
+# 在配置文件中加入一行bip来指定docker0桥网关地址
+[root@CentOS8 ~]# vim /etc/docker/daemon.json
+{
+  "registry-mirrors": ["https://gy97ij1m.mirror.aliyuncs.com","https://registry.docker-cn.com"],
+  "bip": "172.31.0.1/16"   # 新的docker0桥地址
+}
+```
+
+重启服务
+
+```bash
+[root@CentOS8 ~]# systemctl daemon-reload
+[root@CentOS8 ~]# systemctl restart docker
+```
+
+重启后查看`docker0`地址
+
+```bash
+[root@CentOS8 ~]# ifconfig docker0
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.31.0.1  netmask 255.255.0.0  broadcast 172.31.255.255
+        inet6 fe80::42:8dff:fe88:5d52  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:8d:88:5d:52  txqueuelen 0  (Ethernet)
+        RX packets 1686  bytes 81613 (79.7 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 3026  bytes 14753301 (14.0 MiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+```
+

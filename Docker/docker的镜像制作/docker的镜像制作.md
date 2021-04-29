@@ -1,13 +1,17 @@
-# docker的镜像与制作
-## docker镜像的内核
-从镜像大小上面来说，一个比较小的镜像只有十几MB，而内核文件需要一百多兆，因此镜像里面是没有内核的，镜像在被启动为容器后将直接使用宿主机的内核，而镜像本身则只提供相应的rootfs，即系统正常运行所必须的用户空间的文件系统，比如/dev/，/proc，/bin，/etc等目录，所以容器当中基本是没有/boot目录的，而/boot 当中保存的就是与内核相关的文件和目录。
+## docker的镜像与制作
+### docker镜像的内核
+从镜像大小上面来说，一个比较小的镜像只有十几MB，而内核文件需要一百多兆，因此镜像里面是没有内核的，镜像在被启动为容器后将直接使用宿主机的内核，而镜像本身则只提供相应的`rootfs`，即系统正常运行所必须的用户空间的文件系统，比如`/dev/`，`/proc`，`/bin`，`/etc`等目录，所以容器当中基本是没有`/boot`目录的，而/boot 当中保存的就是与内核相关的文件和目录。
+
 由于容器启动和运行过程中是直接使用了宿主机的内核，所以没有直接调用过物理硬件，所以也不会涉及到硬件驱动，因此也用不上内核和驱动，另外有内核的那是虚拟机。
-## docker镜像的制作
-Docker制作镜像类似于虚拟机的镜像制作，即按照公司的实际业务务求将需要安装的软件、相关配置等基础环境配置完成，然后将其做成镜像，最后再批量从镜像批量生产实例，这样可以极大的简化相同环境的部署工作，Docker 的镜像制作分为手动制作和自动制作(基于 DockerFile)。
-## 手动制作镜像
-### 手动制作基于yum安装的nginx镜像
+
+### docker镜像的制作
+Docker制作镜像类似于虚拟机的镜像制作，即按照公司的实际业务务求将需要安装的软件、相关配置等基础环境配置完成，然后将其做成镜像，最后再批量从镜像批量生产实例，这样可以极大的简化相同环境的部署工作，Docker 的镜像制作分为手动制作和自动制作(基于 `DockerFile`)。
+### 手动制作镜像
+#### 手动制作基于`yum`安装的`nginx`镜像
 由于是基于基础镜像制作的镜像，所以需要先下载基础镜像
-1.下载centos基础镜像
+
+1. 下载`centos`基础镜像
+
 ```bash
 root@mylinuxops:~# docker pull centos
 Using default tag: latest
@@ -16,26 +20,31 @@ latest: Pulling from library/centos
 Digest: sha256:a799dd8a2ded4a83484bbae769d97655392b3f86533ceb7dd96bbac929809f3c
 Status: Downloaded newer image for centos:latest
 ```
-2.启动容器并进入
+2. 启动容器并进入
+
 ```bash
 root@mylinuxops:~# docker run -it centos bash
 [root@806443b4db62 /]# 
 ```
-3.yum安装nginx
+3. `yum`安装`nginx`
+
 ```bash
 [root@806443b4db62 /]# yum install epel-release -y
 [root@806443b4db62 /]# yum install nginx -y
 ```
-4.修改配置文件，关闭后台功能
+4. 修改配置文件，关闭后台功能
+
 ```bash
 [root@806443b4db62 /]# vi /etc/nginx/nginx.conf
 daemon off;
 ```
-5.修改首页文件
+5. 修改首页文件
+
 ```bash
 [root@806443b4db62 /]# echo "welcome to mylinuxops.com" > /usr/share/nginx/html/index.html 
 ```
-6.另启一个终端，将容器提交为一个新的镜像
+6. 另启一个终端，将容器提交为一个新的镜像
+
 ```bash
 #执行docker ps 找到刚才运行的容器
 root@mylinuxops:~# docker ps -a
@@ -51,14 +60,16 @@ sha256:7946e43749460308e610488b73d0cae68f25fd7844d721128ff27a67bf5b9849
 -c:容器启动时在dockerfile内执行的命令
 -p:暂停镜像
 ```
-7.提交完毕后查看本地镜像
+7. 提交完毕后查看本地镜像
+
 ```bash
 root@mylinuxops:~# docker images
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
 nginx               v1                  7946e4374946        4 minutes ago       405MB
 centos              latest              9f38484d220f        3 months ago        202MB
 ```
-8.启动制作好的nginx镜像，并进行测试
+8. 启动制作好的`nginx`镜像，并进行测试
+
 ```bash
 root@mylinuxops:~# docker run -d -p 80:80 nginx:v1 nginx
 1db57e2236c1130dcfcbf1c93e0c9afb3e933238036667d860f177a5e65fe1b3
@@ -66,18 +77,22 @@ root@mylinuxops:~# curl 192.168.27.10
 welcome to mylinuxops.com
 ```
 
-## 基于Dockerfile制作镜像
-DockerFile可以说是一种可以被Docker程序解释的脚本，DockerFile是由一条条的命令组成的，每条命令对应linux下面的一条命令，Docker程序将这些DockerFile指令再翻译成真正的linux命令，其有自己的书写方式和支持的命令，Docker程序读取DockerFile并根据指令生成Docker镜像，相比手动制作镜像的方式，DockerFile更能直观的展示镜像是怎么产生的，有了DockerFile，当后期有额外的需求时，只要在之前的DockerFile添加或者修改响应的命令即可重新生成新的Docke镜像，避免了重复手动制作镜像的麻烦。
-### DockerFile制作yum版nginx镜像
-1.先下载一个基础镜像
+### 基于`Dockerfile`制作镜像
+`DockerFile`可以说是一种可以被`Docker`程序解释的脚本，`DockerFile`是由一条条的命令组成的，每条命令对应`linux`下面的一条命令，`Docker`程序将这些`DockerFile`指令再翻译成真正的`linux`命令，其有自己的书写方式和支持的命令，`Docker`程序读取`DockerFile`并根据指令生成`Docker`镜像，相比手动制作镜像的方式，`DockerFile`更能直观的展示镜像是怎么产生的，有了`DockerFile`，当后期有额外的需求时，只要在之前的`DockerFile`添加或者修改响应的命令即可重新生成新的`Docker`镜像，避免了重复手动制作镜像的麻烦。
+
+#### `DockerFil`e制作`yum`版`nginx`镜像
+1. 先下载一个基础镜像
+
 ```bash
 root@mylinuxops:~# docker pull centos
 ```
-2.创建出Dockerfile的目录
+2. 创建出`Dockerfile`的目录
+
 ```bash
 root@mylinuxops:~# mkdir /opt/dockerfile/nginx-v1 -p
 ```
-3.进入目录内创建Dockerfile文件
+3. 进入目录内创建`Dockerfile`文件
+
 ```bash
 root@mylinuxops:~# cd /opt/dockerfile/nginx-v1/
 root@mylinuxops:/opt/dockerfile/nginx-v1# vim Dockerfile
@@ -87,17 +102,20 @@ MAINTAINER masuri 438214186@qq.com
 RUN yum install epel-release -y && yum install nginx -y
 # 保存退出，进行build做测试
 ```
-4.进行镜像的制作
+4. 进行镜像的制作
+
 ```bash
 root@mylinuxops:/opt/dockerfile/nginx-v1# docker build -t nginx-v1 .
 ```
-5.启动容器并进入容器验证nginx是否安装
+5. 启动容器并进入容器验证`nginx`是否安装
+
 ```bash
 root@mylinuxops:/opt/dockerfile/nginx-v1# docker run -it --rm nginx-v1
 [root@9ca08f4568d0 /]# nginx -v       
 nginx version: nginx/1.12.2
 ```
-6.修改配置文件并提取出nginx配置文件
+6.修改配置文件并提取出`nginx`配置文件
+
 ```bash
 [root@06825037a42e /]# cd /etc/nginx/
 [root@06825037a42e nginx]# vi /etc/nginx/nginx.conf     #修改配置文件
@@ -105,7 +123,8 @@ daemon off;         #关闭后台启动
 [root@06825037a42e nginx]# sz nginx.conf        #提取配置文件
 [root@06825037a42e nginx]# exit             #退出容器
 ```
-6.继续编写dockerfile文件
+6.继续编写`dockerfile`文件
+
 ```bash
 root@mylinuxops:/opt/dockerfile/nginx-v1# vim Dockerfile 
 # nginx images
@@ -123,7 +142,8 @@ root@mylinuxops:/opt/dockerfile/nginx-v1# echo "welcome to mylinuxops.com" > ind
 root@mylinuxops:/opt/dockerfile/nginx-v1# tar czvf code.tar.gz index.html 
 index.html
 ```
-8.将nginx的配置文件导入
+8.将`nginx`的配置文件导入
+
 ```bash
 root@mylinuxops:/opt/dockerfile/nginx-v1# ll
 total 24
@@ -146,13 +166,15 @@ root@mylinuxops:/opt/dockerfile/nginx-v1# curl 192.168.27.10
 welcome to mylinuxops.com
 ```
 基于yum的镜像制作完毕
-### Dockerfile制作编译版本的nginx
-1.准备工作，下载nginx源码包，下载centos基础镜像
+#### `Dockerfile`制作编译版本的`nginx`
+1.准备工作，下载`nginx`源码包，下载`centos`基础镜像
+
 ```bash
 root@mylinuxops:~# wget http://nginx.org/download/nginx-1.17.1.tar.gz
 root@mylinuxops:~# docker pull centos
 ```
-2.创建dockerfile目录结构
+2.创建`dockerfile`目录结构
+
 ```bash
 root@mylinuxops:~#  mkdir /opt/dockerfile/{web/{nginx,tomcat,jdk,apache},system/{centos,ubuntu,redhat}} -pv
 #目录结构按照业务类型或系统类型进行划分，方便后期镜像较多时进行分类
@@ -185,7 +207,8 @@ centos              tools               4c18b4654352        20 seconds ago      
 centos              7.6.1810            9f38484d220f        3 months ago        202MB
 centos              latest              9f38484d220f        3 months ago        202MB
 ```
-6.基于带有基本命令的centos镜像编写编译安装nginx的dockerfile
+6.基于带有基本命令的`centos`镜像编写编译安装`nginx`的`dockerfile`
+
 ```bash
 root@mylinuxops:~# cd /opt/dockerfile/web/nginx/
 root@mylinuxops:/opt/dockerfile/web/nginx# vim Dockerfile 
@@ -200,6 +223,7 @@ EXPOSE 80 443
 CMD ["nginx"]
 ```
 7.创建出站点源码并打包
+
 ```bash
 root@mylinuxops:/opt/dockerfile/web/nginx# echo "welcome to mylinuxops.com" > index.html
 root@mylinuxops:/opt/dockerfile/web/nginx# tar -czvf code.tar.gz index.html 
@@ -244,10 +268,11 @@ root@mylinuxops:/opt/dockerfile/web/nginx# docker run -d -p 80:80 nginx:v1
 root@mylinuxops:/opt/dockerfile/web/nginx# curl 192.168.27.10
 welcome to mylinuxops.com
 ```
-### 自定义tomcat镜像
+#### 自定义tomcat镜像
 生产环境中通常一个业务一个镜像，每个业务以不同的层级进行划分，以下为分层的结构
 ![yw.png](yw.png)
-首先下载基础镜像centos，基于基础镜像安装上各种基础命令生成企业内部的基础镜像
+首先下载基础镜像`centos`，基于基础镜像安装上各种基础命令生成企业内部的基础镜像
+
 ```bash
 #下载官方的基础镜像
 root@mylinuxops:~# docker pull centos
@@ -278,7 +303,7 @@ root@mylinuxops:/opt/dockerfile/system/centos# docker images centos:base
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
 centos              base                dcc236b38998        23 seconds ago      508MB
 ```
-基于企业内部的基础镜像制作出jdk的镜像
+基于企业内部的基础镜像制作出`jdk`的镜像
 ```bash
 #切换到JDK的dockerfile目录，编辑dockerfile文件
 root@mylinuxops:~# cd /opt/dockerfile/web/jdk/
@@ -312,7 +337,7 @@ Java(TM) SE Runtime Environment (build 1.8.0_202-b08)
 Java HotSpot(TM) 64-Bit Server VM (build 25.202-b08, mixed mode)
 #jdk镜像打造完毕
 ```
-基于jdk镜像制作tomcat镜像
+基于`jdk`镜像制作`tomcat`镜像
 ```bash
 #进入dockerfile的tomcat目录
 root@mylinuxops:~# cd /opt/dockerfile/web/tomcat/
@@ -353,9 +378,9 @@ d51b6a0470567a9dc62b8998184923b427bce7e7d058ab7d31f0de75405bf1bf
 
 ![tomcat.png](tomcat.png)
 
-### haproxy镜像制作
+#### `haproxy`镜像制作
 
-基于centos:base来制作haproxy镜像
+基于`centos:base`来制作`haproxy`镜像
 
 ```bash
 #创建haproxy的目录
