@@ -308,6 +308,7 @@ root@mylinuxops:~# nsenter -t 10874 -m -u -i -n -p
 root@7cc02218c515:/# 
 ```
 #### 4.使用脚本进入容器
+
 在使用nsenter命令进入容器时，一般会将命令写入脚本然后进行调用，一般建议在每台运行k8s的主机上都存放一个脚本方便进入容器
 ```bash
 root@mylinuxops:~# vim docker-in.sh
@@ -337,3 +338,4 @@ root@mylinuxops:~# docker run -it --dns 223.6.6.6 nginx bash
 root@813870a2f3a8:/# cat /etc/resolv.conf 
 nameserver 223.6.6.6
 ```
+
